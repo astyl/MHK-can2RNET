@@ -87,6 +87,7 @@ def dissect_frame(frame):
 
 def cansend(s, cansendtxt):
     try:
+        print("cansend:"+cansendtxt)
         out = build_frame(cansendtxt)
         if out != 'Err!':
             s.send(out)
@@ -173,13 +174,11 @@ class SocketWrapper:
         self.udp_socket_recv.bind(self.addressRecv)
 
     def send(self, msg):
-        print("Sending:"+str(msg))
         self.udp_socket_send.sendto(msg, self.addressSend)
 
     def recvfrom(self, size):
         msg, addr = self.udp_socket_recv.recvfrom(size)
-        print("Receiving:"+str(msg))
-        return msg
+        return msg, addr
 
 
 def openudpsocket(addressRecv, addressSend):

@@ -14,7 +14,7 @@ class SendRunner(threading.Thread):
         while True:
             sleep(0.1)
             print("sending joy frame")
-            cansend(socketWrapper, "02000000#1FFF0000")
+            cansend(socketWrapper, "02000000#0000")
 
 
 class RecvRunner(threading.Thread):
@@ -28,5 +28,5 @@ class RecvRunner(threading.Thread):
 
 a = SendRunner()
 b = RecvRunner()
-a.run()
-b.run()
+b.start()
+a.start()

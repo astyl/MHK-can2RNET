@@ -33,7 +33,6 @@ debug = True
 
 # JoyLocal.py - Translate USB joystick x/y axis to Rnet and inject onto canbus
 class X360:
-
     axis_map = []
     button_map = []
     xthreshold = 8 * 0x10000 / 128
