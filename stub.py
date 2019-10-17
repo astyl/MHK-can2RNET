@@ -6,22 +6,7 @@ addressSend = ('localhost', 10000)
 addressRecv = ('localhost', 10001)
 
 
-class SocketWrapper:
-    def __init__(self):
-        self.udp_socket_send = socket.socket(
-            family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_recv = socket.socket(
-            family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_recv.bind(addressRecv)
-
-    def send(self, msg):
-        self.udp_socket_send.sendto(msg, addressSend)
-
-    def recvfrom(self, size):
-        return self.udp_socket_recv.recvfrom(size)
-
-
-socketWrapper = SocketWrapper()
+socketWrapper = SocketWrapper(addressRecv, addressSend)
 
 
 class SendRunner(threading.Thread):
@@ -42,6 +27,6 @@ class RecvRunner(threading.Thread):
 
 
 a = SendRunner()
-b = SendRunner()
+b = RecvRunner()
 a.run()
 b.run()

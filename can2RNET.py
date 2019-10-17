@@ -160,3 +160,27 @@ def opencansocket(busnum):
             print('Failed to open vcan'+busnum+' socket')
             cansocket = ''
     return cansocket
+
+
+class SocketWrapper:
+    def __init__(self, addressRecv, addressSend):
+        self.addressRecv = addressRecv
+        self.addressSend = addressSend
+        self.udp_socket_send = socket.socket(
+            family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.udp_socket_recv = socket.socket(
+            family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.udp_socket_recv.bind(self.addressRecv)
+
+    def send(self, msg):
+        print("Sending:"+str(msg))
+        self.udp_socket_send.sendto(msg, self.addressSend)
+
+    def recvfrom(self, size):
+        msg, addr = self.udp_socket_recv.recvfrom(size)
+        print("Receiving:"+str(msg))
+        return msg
+
+
+def openudpsocket(addressRecv, addressSend):
+    return SocketWrapper(addressRecv, addressSend)

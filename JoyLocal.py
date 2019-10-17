@@ -394,9 +394,9 @@ if __name__ == "__main__":
     rnet_threads_running = True
     # can_socket = opencansocket(0)
     # Create a UDP socket
-    can_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    # Bind to address and ip
-    can_socket.bind(('localhost', 10000))
+    addressSend = ('localhost', 10001)
+    addressRecv = ('localhost', 10000)
+    can_socket = SocketWrapper(addressRecv, addressSend)
 
     # init usb joystick
     # x360 = X360()
