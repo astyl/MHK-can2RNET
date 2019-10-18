@@ -9,7 +9,8 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-FRAME_JSM_INDUCE_ERROR = '0c000000#'
+ID_JSM_INDUCE_ERROR = '0c000000'
+FRAME_JSM_INDUCE_ERROR = ID_JSM_INDUCE_ERROR + '#'
 ID_JOY_CONTROL = '0c020000'  # may differ according to your setup
 
 

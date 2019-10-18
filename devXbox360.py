@@ -206,8 +206,8 @@ class Watcher(threading.Thread):
     def run(self):
         started_time = time()
         while not self.stopRun:
-            sleep(0.5)
-            logger.info("{time} \tX: {joyX} \tY: {joyX}".format(
+            sleep(0.1)
+            logger.info("{time} \tX: {joyX} \tY: {joyY}".format(
                 time=round(time()-started_time, 2),
                 joyX=self.devXbox360.joystick_x,
                 joyY=self.devXbox360.joystick_y))

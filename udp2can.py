@@ -5,19 +5,35 @@ import socket
 
 
 class CustomCANOverUDPSock:
-    def __init__(self, addressRecv, addressSend):
-        self.addressRecv = addressRecv
-        self.addressSend = addressSend
+    def __init__(self):
+        IP = '192.168.0.100'
+        self.addressSend = (IP, 6000)
+        self.addressRecv = (IP, 5000)
         # send
         self.udp_socket_send = socket.socket(
             family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.udp_socket_send.bind((IP, 5000))
         # recv
         self.udp_socket_recv = socket.socket(
             family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.udp_socket_recv.bind(self.addressRecv)
 
     def send(self, msg):
-        self.udp_socket_send.sendto(msg, self.addressSend)
+        import can2RNET
+        import common
+        import struct
+        frame = can2RNET.dissect_frame(msg)
+        frameId = frame.split("#")[0]
+        newframe = ""
+
+        if frameId == common.ID_JSM_INDUCE_ERROR:
+            newframe = struct.pack("III", 2, 0, 0)
+        elif frameId == common.ID_JOY_CONTROL:
+            data = frame.split("#")[1]
+            print(data)
+            newframe = struct.pack("IB", 1)
+
+        self.udp_socket_send.sendto(newframe, self.addressSend)
 
     def recvfrom(self, size):
         msg, addr = self.udp_socket_recv.recvfrom(size)
@@ -25,18 +41,10 @@ class CustomCANOverUDPSock:
 
 
 def getUDP2CANSock():
-    addressSend = ('localhost', 6000)
-    addressRecv = ('localhost', 10001)
-    return CustomCANOverUDPSock(addressRecv, addressSend)
+    return CustomCANOverUDPSock()
 
 
-def getUDP2CANSockBis():
-    addressSend = ('localhost', 10001)
-    addressRecv = ('localhost', 6000)
-    return CustomCANOverUDPSock(addressRecv, addressSend)
-
-
-if __name__ == "__main__":
+def test():
     import can2RNET
     import common
     from time import sleep
@@ -44,7 +52,6 @@ if __name__ == "__main__":
     import threading
 
     udp2canSock = getUDP2CANSock()
-    udp2canSockBis = getUDP2CANSockBis()
 
     msgA_tosend = common.FRAME_JSM_INDUCE_ERROR
 
@@ -66,3 +73,11 @@ if __name__ == "__main__":
     t2.join()
 
     assert(msgA_tosend == msgA_received)
+
+
+if __name__ == "__main__":
+    import common
+    import can2RNET
+
+    cansocket = getUDP2CANSock()
+    can2RNET.cansend(cansocket, common.FRAME_JSM_INDUCE_ERROR)
