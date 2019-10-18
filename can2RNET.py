@@ -20,9 +20,10 @@
 import socket
 import struct
 import sys
-from time import *
+from time import time, sleep
 import binascii  # used in build_frame
 import threading
+from common import logger
 
 # all functions take CAN messages as a string in "CANSEND" (from can-utils) format
 """
@@ -41,7 +42,7 @@ e.g. 5A1#11.2233.44556677.88 / 123#DEADBEEF / 5AA# / 123##1 / 213##311
 
 def build_frame(canstr):
     if not '#' in canstr:
-        print('build_frame: missing #')
+        logger.error('build_frame: missing #')
         return 'Err!'
 
     cansplit = canstr.split('#')
@@ -53,7 +54,7 @@ def build_frame(canstr):
         canid = struct.pack(
             'I', int(cansplit[0], 16)+0x80000000+0x40000000*RTR)
     else:
-        print('build_frame: cansend frame id format error: ' + canstr)
+        logger.error('build_frame: cansend frame id format error: ' + canstr)
         return 'Err!'
     can_dlc = 0
     len_datstr = len(cansplit[1])
@@ -64,7 +65,7 @@ def build_frame(canstr):
     elif not len_datstr or RTR:
         candat = b'\x00\x00\x00\x00\x00\x00\x00\x00'
     else:
-        print('build_frame: cansend data format error: ' + canstr)
+        logger.error('build_frame: cansend data format error: ' + canstr)
         return 'Err!'
     return canid+struct.pack("B", can_dlc & 0xF)+b'\x00\x00\x00'+candat
 
@@ -87,13 +88,14 @@ def dissect_frame(frame):
 
 def cansend(s, cansendtxt):
     try:
-        print("cansend:"+cansendtxt)
+        logger.info("cansend:"+cansendtxt)
         out = build_frame(cansendtxt)
         if out != 'Err!':
             s.send(out)
     except socket.error as e:
-        print('reason:'+str(e))
-        print('Error sending CAN frame ' + cansendtxt)
+        logger.error('reason:'+str(e))
+        logger.error('Error sending CAN frame ' + cansendtxt)
+        raise e
 
 
 def canrepeat_stop(thread):
@@ -109,7 +111,7 @@ def canrepeatThread(s, cansendtxt, interval):
         nexttime += interval
         if (nexttime > time()):
             sleep(nexttime - time())
-    print(str(threading.currentThread())+' stopped')
+    logger.info(str(threading.currentThread())+' stopped')
 
 
 def canrepeat(s, cansendtxt, interval):  # interval in ms
@@ -117,11 +119,12 @@ def canrepeat(s, cansendtxt, interval):  # interval in ms
         s, cansendtxt, interval), daemon=True)
     t._stop = False  # threading.Event()
     t.start()
-    print('Starting thread: ' + cansendtxt + ' ' + str(interval))
+    logger.info('Starting thread: ' + cansendtxt + ' ' + str(interval))
     return (t)
 
 
 def canwait(s, canfiltertxt):
+    logger.info("canwait:"+canfiltertxt)
     can_idf_split = canfiltertxt.split(':')
     canidint = int(can_idf_split[0], 16)
     mask = int(can_idf_split[1], 16)
@@ -146,40 +149,19 @@ def canwaitRTR(s, canfiltertxt):
 def opencansocket(busnum):
     busnum = str(busnum)
     # open socketcan connection
+    cansocket = socket.socket(
+        socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
     try:
-        cansocket = socket.socket(
-            socket.AF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
         cansocket.bind(('can'+busnum,))
-        print('socket connected to can'+busnum)
-    except socket.error:
-        print('Failed to open can'+busnum+' socket')
-        print('Attempting to open vcan'+busnum+' socket')
+        logger.info('socket connected to can'+busnum)
+    except socket.error as e:
+        logger.error('Failed to open can'+busnum+' socket')
+        logger.warning('Attempting to open vcan'+busnum+' socket')
         try:
             cansocket.bind(('vcan'+busnum,))
-            print('socket connected to vcan'+busnum)
+            logger.info('socket connected to vcan'+busnum)
         except:
-            print('Failed to open vcan'+busnum+' socket')
+            logger.error('Failed to open vcan'+busnum+' socket')
             cansocket = ''
+            raise e
     return cansocket
-
-
-class SocketWrapper:
-    def __init__(self, addressRecv, addressSend):
-        self.addressRecv = addressRecv
-        self.addressSend = addressSend
-        self.udp_socket_send = socket.socket(
-            family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_recv = socket.socket(
-            family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_recv.bind(self.addressRecv)
-
-    def send(self, msg):
-        self.udp_socket_send.sendto(msg, self.addressSend)
-
-    def recvfrom(self, size):
-        msg, addr = self.udp_socket_recv.recvfrom(size)
-        return msg, addr
-
-
-def openudpsocket(addressRecv, addressSend):
-    return SocketWrapper(addressRecv, addressSend)
