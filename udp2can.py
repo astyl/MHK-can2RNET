@@ -6,17 +6,17 @@ import socket
 
 class CustomCANOverUDPSock:
     def __init__(self):
-        IP = '192.168.0.100'
+        IP = '192.168.0.95'
         self.addressSend = (IP, 6000)
         self.addressRecv = (IP, 5000)
         # send
         self.udp_socket_send = socket.socket(
             family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_send.bind((IP, 5000))
+        self.udp_socket_send.bind(('192.168.0.100', 5000))
         # recv
-        self.udp_socket_recv = socket.socket(
-            family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket_recv.bind(self.addressRecv)
+       # self.udp_socket_recv = socket.socket(
+       #     family=socket.AF_INET, type=socket.SOCK_DGRAM)
+       # self.udp_socket_recv.bind(self.addressRecv)
 
     def send(self, msg):
         import can2RNET
@@ -30,8 +30,9 @@ class CustomCANOverUDPSock:
             newframe = struct.pack("III", 2, 0, 0)
         elif frameId == common.ID_JOY_CONTROL:
             data = frame.split("#")[1]
-            print(data)
-            newframe = struct.pack("IB", 1)
+            x = int(data[:2],16)
+            y = int(data[2:4],16)
+            newframe = struct.pack("IBBBBI", 1,0,0,y,x,0)
 
         self.udp_socket_send.sendto(newframe, self.addressSend)
 
@@ -80,4 +81,8 @@ if __name__ == "__main__":
     import can2RNET
 
     cansocket = getUDP2CANSock()
-    can2RNET.cansend(cansocket, common.FRAME_JSM_INDUCE_ERROR)
+    #can2RNET.cansend(cansocket, common.FRAME_JSM_INDUCE_ERROR)
+    jf = common.createJoyFrame( -12, -29 )
+    can2RNET.cansend(cansocket, jf )
+    
+    

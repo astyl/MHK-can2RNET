@@ -25,6 +25,7 @@ def dec2hex(dec, hexlen):  # convert dec to hex with leading 0s and no '0x'
 
 
 def createJoyFrame(joystick_x, joystick_y):
+    print(joystick_x, joystick_y)
     joyframe = ID_JOY_CONTROL+'#' + \
         dec2hex(joystick_x, 2)+dec2hex(joystick_y, 2)
     return joyframe
